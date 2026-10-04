@@ -1,0 +1,89 @@
+[gd_scene format=3]
+
+[ext_resource type="Environment" path="res://scenes/nagrand-environment.tres" id="1_env"]
+[ext_resource type="Script" path="res://scripts/world/lowpoly_terrain.gd" id="2_lpt"]
+[ext_resource type="PackedScene" path="res://scenes/vehicle.tscn" id="3_car"]
+[ext_resource type="Script" path="res://scripts/camera/view.gd" id="4_view"]
+[ext_resource type="Script" path="res://addons/gdtuner/auto_tunable.gd" id="5_tun"]
+[ext_resource type="Script" path="res://scripts/world/vehicle_picker.gd" id="6_pick"]
+[ext_resource type="Script" path="res://scripts/hud/minimap.gd" id="7_mini"]
+
+[node name="Main" type="Node3D"]
+
+[node name="Environment" parent="." type="WorldEnvironment"]
+environment = ExtResource("1_env")
+
+[node name="Terrain" parent="." type="Node3D"]
+script = ExtResource("2_lpt")
+world_chunks = Vector2i(8, 8)
+chunk_size = 16
+cell_size = 4.0
+seed = 20261003
+hill_height = 7.0
+plains_radius = 110.0
+ring_start = 170.0
+ring_height = 62.0
+rim_height = 70.0
+jitter_strength = 0.3
+
+[node name="Sun" parent="." type="DirectionalLight3D"]
+transform = Transform3D(-0.422618, -0.694272, 0.582564, 0, 0.642788, 0.766044, -0.906308, 0.323744, -0.271654, 0, 0, 0)
+shadow_enabled = true
+shadow_bias = 0.2
+shadow_normal_bias = 1.0
+shadow_opacity = 0.75
+directional_shadow_mode = 0
+directional_shadow_blend_splits = true
+directional_shadow_max_distance = 600.0
+directional_shadow_pancake_size = 2.0
+light_color = Color(1, 0.96, 0.88, 1)
+light_energy = 0.6
+light_specular = 0.6
+sky_mode = 1
+
+[node name="Vehicle" parent="." instance=ExtResource("3_car")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+is_player = true
+
+[node name="View" parent="." type="Node3D" node_paths=PackedStringArray("target")]
+script = ExtResource("4_view")
+target = NodePath("../Vehicle")
+
+[node name="Camera" parent="View" type="Camera3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 16)
+current = true
+near = 0.05
+far = 1600.0
+fov = 70.0
+
+[node name="AutoTunable" parent="View" type="Node"]
+script = ExtResource("5_tun")
+
+[node name="Garage" parent="." type="Node3D"]
+script = ExtResource("6_pick")
+
+[node name="UI" parent="." type="CanvasLayer"]
+layer = 2
+
+[node name="Minimap" parent="UI" type="Control"]
+layout_mode = 3
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -202.0
+offset_top = 12.0
+offset_right = -12.0
+offset_bottom = 202.0
+mouse_filter = 2
+
+[node name="Frame" parent="UI/Minimap" type="Control"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("7_mini")
+follow_mode = true
+follow_span = 240.0

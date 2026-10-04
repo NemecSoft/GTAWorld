@@ -1,0 +1,9 @@
+[gd_scene format=3 ]
+
+[ext_resource type="Script" path="res://scripts/rigid_vehicle/wheel_rigid.gd" id="1_kuckw"]
+
+[node name="CustomWheel" type="RayCast3D" unique_id=2059454740]
+target_position = Vector3(0, -20, 0)
+debug_shape_custom_color = Color(1, 0, 1, 1)
+debug_shape_thickness = 5
+script = ExtResource("1_kuckw")

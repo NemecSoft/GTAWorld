@@ -1,0 +1,14 @@
+[gd_resource type="Material" format=3]
+
+[resource]
+cull_mode = 2
+vertex_color_use_as_albedo = true
+albedo = Color(1, 1, 1, 1)
+metallic = 0.0
+roughness = 1.0
+specular = 0.5
+shininess = 8.0
+visibility = true
+shadow = true
+light = true
+ao = true
