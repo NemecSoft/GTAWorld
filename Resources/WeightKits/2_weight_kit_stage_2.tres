@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="WeightKitStats" format=3 uid="uid://d37vhen1rbnu5"]
+
+[ext_resource type="Script" uid="uid://cf5lbkrhx63wf" path="res://Resources/WeightKit.gd" id="1_7ohy1"]
+
+[resource]
+script = ExtResource("1_7ohy1")
+weight_multiplier = 0.9
+name = "Weight Kit Stage 2"
+price = 500.0
+metadata/_custom_type_script = "uid://cf5lbkrhx63wf"

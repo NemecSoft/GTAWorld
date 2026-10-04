@@ -1,0 +1,59 @@
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://scripts/actors/urban_game.gd" id="1_urban"]
+[ext_resource type="Environment" path="res://scenes/urban-environment.tres" id="2_env"]
+[ext_resource type="Script" path="res://scripts/world/city_builder.gd" id="3_city"]
+[ext_resource type="PackedScene" path="res://scenes/player.tscn" id="4_player"]
+[ext_resource type="Script" path="res://scripts/camera/view.gd" id="5_view"]
+[ext_resource type="Script" path="res://scripts/net/urban_net.gd" id="6_net"]
+[ext_resource type="Script" path="res://scripts/ui/minimap.gd" id="7_mini"]
+[ext_resource type="Script" path="res://scripts/world/urban_terrain.gd" id="8_terr"]
+[ext_resource type="Script" path="res://scripts/actors/vam_stand_in.gd" id="9_vam"]
+[ext_resource type="Script" path="res://scripts/world/suburb_placer.gd" id="10_suburb"]
+[ext_resource type="Script" path="res://scripts/hud/drive_hud.gd" id="11_drivehud"]
+
+[node name="Urban" type="Node3D"]
+script = ExtResource("1_urban")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = ExtResource("2_env")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+transform = Transform3D(-0.422618, -0.694272, 0.582564, 0, 0.642788, 0.766044, -0.906308, 0.323744, -0.271654, 0, 0, 0)
+shadow_enabled = true
+shadow_bias = 0.2
+shadow_normal_bias = 1.0
+shadow_opacity = 0.75
+directional_shadow_mode = 0
+
+[node name="City" type="Node3D" parent="."]
+script = ExtResource("3_city")
+
+[node name="Terrain" type="Node3D" parent="."]
+script = ExtResource("8_terr")
+
+[node name="SuburbPlacer" type="Node3D" parent="."]
+script = ExtResource("10_suburb")
+
+[node name="Player" parent="." instance=ExtResource("4_player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23, 0.1, 16)
+
+[node name="VamStandIn" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21.6, 0, 16)
+script = ExtResource("9_vam")
+facing_deg = 90.0
+
+[node name="View" type="Node3D" parent="."]
+script = ExtResource("5_view")
+
+[node name="Camera" type="Camera3D" parent="View"]
+far = 1200.0
+
+[node name="Net" type="Node3D" parent="."]
+script = ExtResource("6_net")
+
+[node name="Minimap" type="Node3D" parent="."]
+script = ExtResource("7_mini")
+
+[node name="DriveHUD" type="CanvasLayer" parent="."]
+script = ExtResource("11_drivehud")
