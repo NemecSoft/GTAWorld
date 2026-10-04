@@ -24,12 +24,15 @@ REM  so your machine-wide git config stays untouched.
 REM
 REM  ---- SHALLOW HISTORY, READ THIS ----
 REM  This project was cloned with depth=1 from a mirror, so .git\shallow exists
-REM  and the history is cut at Kenney's template commit. GitHub REJECTS shallow
-REM  pushes ("shallow update not allowed"), so we cannot publish this history as is.
-REM  Default (KEEP_TEMPLATE_HISTORY=0): publish ONE fresh root commit authored by
-REM  NemecSoft, and keep the template commit reachable under the tag
-REM  "kenney-template" (nothing is deleted, and "git checkout -B main
-REM  kenney-template" would bring the old line back).
+REM  and the history is cut at Kenney's template commit. That mattered only for the
+REM  FIRST push, where GitHub refused ("shallow update not allowed") and the script
+REM  published a fresh orphan root instead, keeping the template commit under the tag
+REM  "kenney-template".
+REM  SINCE then, origin/main contains our own line of commits. Step 3 now asks git
+REM  whether HEAD and origin/main share any commit:
+REM    shared   -> normal add/commit/push (fast-forward). No orphan root, no divergence.
+REM    no origin branch at all, still shallow -> first publish -> orphan root + tag.
+REM    origin branch exists but unrelated -> leave main alone, step 6 merges -X ours.
 REM  Set KEEP_TEMPLATE_HISTORY=1 to instead fetch the complete upstream history
 REM  from the "kenney" remote first and commit on top of it -- needs that mirror
 REM  (https://gh-proxy.org/...) to be reachable, and downloads its whole history.
@@ -78,10 +81,24 @@ git remote add origin "%REPO%"
 git remote -v
 
 echo [3/6] shallow history
+REM  Key question is not "am I shallow?" but "does origin already carry OUR line?"
+REM  Once origin/main contains one of our commits, a new commit on top fast-forwards
+REM  and GitHub accepts it even from a shallow clone (it only needs the new objects).
+REM  Creating an orphan root in that situation is what made every run diverge and get
+REM  rejected with "non-fast-forward". So: shared history -> commit normally.
+git fetch origin "%BRANCH%" >nul 2>&1
+git merge-base "refs/remotes/origin/%BRANCH%" HEAD >nul 2>&1
+if not errorlevel 1 goto :same_line
 if not exist ".git\shallow" goto :deep_ok
 echo       this clone is shallow (.git\shallow present)
 if "%KEEP_TEMPLATE_HISTORY%"=="1" goto :try_unshallow
-echo       publishing a fresh root commit instead; template commit -^> tag "kenney-template"
+REM  No shared history at all. If the remote branch does not exist yet this really is
+REM  the first publish -> a fresh root commit is the right thing. If it DOES exist but
+REM  is unrelated (README/license was ticked when creating the repo) we must NOT move
+REM  main away from the local line; the merge-retry in step 6 handles that instead.
+git rev-parse --verify -q "refs/remotes/origin/%BRANCH%" >nul
+if not errorlevel 1 goto :unrelated_remote
+echo       first publish: fresh root commit; template commit -^> tag "kenney-template"
 git tag --force kenney-template
 if errorlevel 1 goto :fail
 set "ORPHAN=1"
@@ -97,6 +114,15 @@ echo       unshallow failed (mirror unreachable?) -- falling back to a fresh roo
 git tag --force kenney-template
 if errorlevel 1 goto :fail
 set "ORPHAN=1"
+goto :staged
+:same_line
+echo       origin/%BRANCH% already contains our history -- committing on top, no orphan root
+set "ORPHAN=0"
+goto :staged
+:unrelated_remote
+echo       origin/%BRANCH% exists but shares no commits with HEAD (repo was created
+echo       with a README/license). Keeping the local line; step 6 will merge it in.
+set "ORPHAN=0"
 goto :staged
 :deep_ok
 echo       history is complete, committing on top of it

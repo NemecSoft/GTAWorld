@@ -23,6 +23,11 @@ const CATALOG := [
 		"script": "res://scripts/vehicles/vehicle_arcade.gd",
 		"model": "res://models/vehicle-truck-yellow.glb",
 		"len": 0.0,
+		# 【len 和 city_len 为什么要两个数】两套地图的比例尺根本不是一回事：
+		# scenes/main.tscn 是 GridMap 玩具赛道（皮卡在那儿就是 1.83 长，本来就对，所以 len=0 不缩），
+		# scenes/urban.tscn 按真实世界尺寸铺（Kenney 车统一归一到 4.3 长，见 city_builder.CAR_LEN_TARGET）。
+		# 都市里要让起步车 = 车库选的那台（#36 F2），就得按都市的比例尺再给一个长度。
+		"city_len": 4.3,
 		"preview": "res://ui/preview_car.png",
 		"tags": ["默认", "四轮", "均衡"],
 	},
@@ -33,6 +38,7 @@ const CATALOG := [
 		"script": "res://scripts/vehicles/vehicle_arcade.gd",
 		"model": "res://models/vehicle-truck-green.glb",
 		"len": 0.0,
+		"city_len": 4.3,
 		"preview": "res://ui/preview_green.png",
 		"tags": ["配色", "四轮", "均衡"],
 	},
@@ -43,6 +49,8 @@ const CATALOG := [
 		"script": "res://scripts/vehicles/vehicle_motorcycle.gd",
 		"model": "res://models/vehicle-motorcycle.glb",
 		"len": 0.0,
+		# 摩托在都市里就该是摩托的尺寸（真实两轮 ≈2.1 长），别跟着轿车归一到 4.3
+		"city_len": 2.1,
 		"preview": "res://ui/preview_moto.png",
 		"tags": ["两轮", "飘移", "高速"],
 	},
@@ -57,6 +65,9 @@ const CATALOG := [
 		# 收到 0.72 ⇒ 约 0.55 高 / 0.59 宽 / 0.72 长，比皮卡（1.83 长）小一半还多，
 		# 视觉上"腿短短一只蜂在跑"，肚子离地也跟着降下来（用户反馈"太高 + 太大"）。
 		"len": 0.72,
+		# 蜜蜂高/长 ≈1.51/1.83 = 0.83。按 4.3 归一会顶出 3.5m 高的巨蜂，糊满镜头；
+		# 2.0 ⇒ 约 1.65 高，都市里就是一只比轿车矮的巨型蜂（还是整活，不是拦路石）。
+		"city_len": 2.0,
 		"preview": "res://ui/preview_bee.png",
 		"tags": ["glTF", "骨骼动画", "整活"],
 	},

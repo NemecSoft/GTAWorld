@@ -18,15 +18,21 @@ const SLOT_DX := 6.5
 const SAVE_PATH := "user://save.cfg"
 
 ## 车辆货架：买断制，底盘差异直接写街机参数（上车即生效）
+##
+## 【#36 按 #31 的新基准重标】原来这四条 stats 是 #31 提速之前抄下来的
+## （max_speed 10.4~15.5 m/s），而 urban_game.spawn_city_car 会 car.set("max_speed", …)
+## **覆盖**街机脚本里的默认 32.0 —— 结果花 1800 买的跑车只有 15.5，
+## 比出生点那台免费起步车慢一半还多，经济闭环直接反向。
+## 现在以 base 32.0 为锚拉开档次：便宜车慢但抓地稳（好开），贵车快但甩尾凶（难开）。
 const CARS: Array = [
 	{"id": "car_taxi", "name": "出租车", "path": "res://models/cars/taxi.glb",
-		"price": 400, "stats": {"max_speed": 10.4, "engine_power": 1.1, "lateral_grip": 3.2}},
+		"price": 400, "stats": {"max_speed": 26.0, "engine_power": 1.0, "lateral_grip": 5.6}},
 	{"id": "car_suv", "name": "SUV", "path": "res://models/cars/suv.glb",
-		"price": 900, "stats": {"max_speed": 11.5, "engine_power": 1.15, "lateral_grip": 3.5}},
+		"price": 900, "stats": {"max_speed": 29.0, "engine_power": 1.05, "lateral_grip": 5.2}},
 	{"id": "car_race", "name": "肌肉车", "path": "res://models/cars/race.glb",
-		"price": 1200, "stats": {"max_speed": 13.5, "engine_power": 1.35, "lateral_grip": 2.7}},
+		"price": 1200, "stats": {"max_speed": 36.0, "engine_power": 1.3, "lateral_grip": 4.6}},
 	{"id": "car_sport", "name": "跑车", "path": "res://models/cars/sedan-sports.glb",
-		"price": 1800, "stats": {"max_speed": 15.5, "engine_power": 1.5, "lateral_grip": 2.5}},
+		"price": 1800, "stats": {"max_speed": 42.0, "engine_power": 1.45, "lateral_grip": 4.4}},
 ]
 ## 能力价目：索引 = 升到下一级所需的钱
 const PRICE_SPEED: Array = [300, 600, 1200]

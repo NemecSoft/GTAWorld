@@ -333,7 +333,16 @@ func _spawn_cars() -> void:
 		start.name = "CarStarter"
 		start.transform = Transform3D(Basis(Vector3.UP, PI), Vector3(-19.6, 0.0, 12.0))
 		cars.add_child(start)
-		_outfit_car(start, String(_car_paths[0]))
+		## 【起步车 = 车库里选的那台】(#36 F2)
+		## 以前这里硬写 _car_paths[0]（ sedan-sports ），玩家在 select.tscn 选的摩托
+		## 进了都市完全没反应 —— scenes/main.tscn 才挂着 vehicle_picker.gd，都市没有。
+		## 顺序照 picker 的实测结论：先把模型换好，再换控制器脚本。
+		var def: Dictionary = _garage_choice()
+		if def.is_empty():
+			_outfit_car(start, String(_car_paths[0]))
+		else:
+			_outfit_car(start, String(def["model"]), float(def.get("city_len", CAR_LEN_TARGET)))
+			_apply_controller_script(start, String(def["script"]))
 		start.add_to_group("vehicles")
 	var n: int = 0
 	while n < parked_cars:
@@ -355,7 +364,8 @@ func _spawn_cars() -> void:
 
 
 ## 换模型 + 归一化尺寸 + 关掉停放车的循环音效（进场由 urban_game.gd 恢复）。
-func _outfit_car(car: Node, model_path: String) -> void:
+## target_len：最长边目标（米）。传 <=0 表示「这台模型自己的尺寸就是对的」，只贴地不缩放。
+func _outfit_car(car: Node, model_path: String, target_len: float = CAR_LEN_TARGET) -> void:
 	var container: Node = car.get_node_or_null("Container")
 	if container == null:
 		return
@@ -380,7 +390,7 @@ func _outfit_car(car: Node, model_path: String) -> void:
 	var box: AABB = _world_aabb(m)
 	var ext: float = maxf(box.size.x, maxf(box.size.y, box.size.z))
 	if ext > 0.001:
-		var s: float = CAR_LEN_TARGET / ext
+		var s: float = target_len / ext if target_len > 0.001 else 1.0
 		m.scale *= Vector3.ONE * s
 		# 贴地基准取「轮子」的下沿：部分 Kenney 车的 body 网格带贴地裙边/阴影面，
 		# 比轮底还低 ~0.2 米，按整体 AABB 对齐会让轮子悬空（实测橙色轿车）
@@ -391,6 +401,43 @@ func _outfit_car(car: Node, model_path: String) -> void:
 	var screech: Node = container.get_node_or_null("ScreechSound")
 	if screech != null:
 		screech.stop()
+
+
+## 车库目录（autoload，路径见 scripts/core/garage.gd）。取不到就回空字典，
+## 调用方回落到「随机第一台 Kenney 车」，别让没装 Garage 的地图（nagrand 等）报错。
+func _garage_choice() -> Dictionary:
+	var garage: Node = get_node_or_null("/root/Garage")
+	if garage == null or not garage.has_method("current"):
+		return {}
+	var d: Dictionary = garage.call("current") as Dictionary
+	if d.is_empty() or not d.has("model") or not d.has("script"):
+		return {}
+	return d
+
+
+## 在**同一个节点对象**上换控制器（轿车脚本 ↔ 摩托脚本）。
+## 顺序是 scripts/world/vehicle_picker.gd 实测出来的，别调：先由 _outfit_car 把模型换好，
+## 然后本函数做三步：
+## 1) 换脚本（模型必须已经换好，否则新脚本抓到的引用指向上一台车的残骸）；
+## 2) 手动 bind_nodes()：换脚本不重跑 _ready，不补这一刀则第一帧
+##    handle_input 就 "Cannot call method 'is_colliding' on a null value"，车一动不动；
+## 3) 重贴 model_origin_y：换脚本会重建 ScriptInstance，@export 属性全回默认值 0，
+##    模型底面直接沉进地里（探针实测 -0.3）。
+func _apply_controller_script(car: Node3D, script_path: String) -> void:
+	if script_path.is_empty() or car.script == null:
+		return
+	if String(car.script.resource_path) == script_path:
+		return   # 默认那台就是场景自带的 ArcadeVehicle，不用动
+	var s: Script = load(script_path)
+	if s == null:
+		push_warning("[city] 读不到控制器 " + script_path)
+		return
+	car.script = s
+	if car.has_method("bind_nodes"):
+		car.call("bind_nodes")
+	var m: Node3D = car.get_node_or_null("Container/Model") as Node3D
+	if m != null:
+		car.set("model_origin_y", -0.15 + _wheel_bottom(m))
 
 
 # ------------------------------------------------------------ 对外生成接口（#20）
