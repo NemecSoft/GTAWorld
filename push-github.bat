@@ -191,6 +191,8 @@ echo Done: https://github.com/NemecSoft/GTAWorld
 echo Heads-up: third-party asset and plugin licenses are listed in
 echo THIRD_PARTY_LICENSES.md; the Kenney template commit (if orphaned) is kept
 echo under the tag "kenney-template" and the remote "kenney".
+echo.
+pause
 exit /b 0
 
 :fail_nocd
@@ -206,5 +208,6 @@ echo.
 echo Aborted, nothing was pushed.
 :fail_end
 endlocal
-exit /b 1
+echo.
 pause
+exit /b 1
