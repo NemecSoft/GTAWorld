@@ -1,0 +1,74 @@
+class_name PlayerController
+extends VehicleController
+
+var reset_time := 2.0
+var reset_cooldown := 2.0
+
+# acceleration curve is in RayVehicle due to being limited by speed and not by user input
+# Accel gradually
+var accel_speed := 2.0
+var accel_point := 0.0
+
+# Steering smoothing
+var steer_point := 0.0
+var steer_speed := 2.0
+var steer_return_speed := 2.0 # additional turn speed added when going opposite direction
+
+# Braking smoothing
+var brake_point := 0.0
+var brake_speed := 2.0
+var brake_return_speed := 2.0 # additional turn speed on return
+
+# timer to attempt spawn replay, should only be 1 player controller at a time
+var spawn_timer := 5.0
+var spawn_time_cooldown := 5.0
+
+func steer_handler(delta : float) -> float:
+	var steer = Input.get_axis("left","right")
+	steer_point = clampf( move_toward(steer_point, steer, delta * steer_speed), -1.0, 1.0)
+	
+	if sign(steer) != sign(steer_point):
+		steer_point = clampf( move_toward(steer_point, steer, delta * steer_speed), -1.0, 1.0)
+	
+	return global.steer_curve.sample(steer_point)
+
+func brake_handler(delta : float) -> float:
+	var brake = int( Input.is_action_pressed("back") )
+	brake_point = clampf( move_toward(brake_point, brake, delta * brake_speed), 0.0, 1.0)
+	
+	if brake == 0:
+		brake_point = clampf( move_toward(brake_point, brake, delta * brake_return_speed), 0.0, 1.0)
+	
+	return global.brake_curve.sample(brake_point)
+
+func accel_handler(delta : float) -> float:
+	var reversing := 1 - 2 * int(Input.is_key_pressed(KEY_R))
+	var accel = int(Input.is_action_pressed("forward"))
+	accel_point = move_toward(accel_point, accel * reversing, delta * accel_speed)
+	return accel_point
+
+# Called in vehicle phys_process since not in tree
+func custom_process(delta: float) -> void:
+	# attempt to spawn AI cars around the player on a cooldown
+	spawn_timer -= delta
+	if spawn_timer < 0 or Input.is_action_just_pressed("ui_accept"):
+		global.attempt_ai_spawn()
+		spawn_timer = spawn_time_cooldown
+	
+	# update statistics for savedata
+	update_stats(delta)
+	
+	#global.get_closest_road_and_coords(Vector2(0, 0))
+	reset_cooldown -= delta
+	if Input.is_action_just_pressed("lights"):
+		global.player_car.lights.use_next_preset()
+	if Input.is_action_just_pressed("respawn") and reset_cooldown < 0.0:
+		global.player_car.attempt_respawn()
+		reset_cooldown = reset_time
+
+# updates driving stats
+func update_stats(delta: float) -> void:
+	global.player_data.distance_traveled += global.player_car.linear_velocity.length() * delta
+	if global.player_car.is_drifting: global.player_data.drift_time += delta
+	if global.player_car.is_speeding: global.player_data.speed_time += delta
+	if !global.player_car.is_grounded: global.player_data.jump_time += delta
