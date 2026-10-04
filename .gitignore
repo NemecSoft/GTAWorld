@@ -27,3 +27,5 @@ ref/
 game/
 # Terrain3D 插件（64 MB）：本机 4.7 实测注册失败不可用，且我们的代码 0 引用
 addons/terrain_3d/
+# 2026-10-04 AI 笔记已迁到 docs/agent/（工具中立）；旧工具的私有目录不再进版本库
+.workbuddy/
