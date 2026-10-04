@@ -207,3 +207,4 @@ echo Aborted, nothing was pushed.
 :fail_end
 endlocal
 exit /b 1
+pause
